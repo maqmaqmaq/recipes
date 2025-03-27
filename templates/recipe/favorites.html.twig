@@ -1,0 +1,26 @@
+<ul id="favorite-list">
+    <h1>Ulubione przepisy</h1>
+    {% for recipe in recipes %}
+        <li>
+            <img src="{{ recipe.imageUrl }}" width="100">
+            <a href="{{ path('recipe_detail', {'id': recipe.id}) }}">{{ recipe.title }}</a>
+            <button onclick="toggleFavorite({{ recipe.id }})">
+                <span id="fav-icon-{{ recipe.id }}">-</span> Ulubionych
+            </button>
+        </li>
+    {% else %}
+        <li>Brak wyników.</li>
+    {% endfor %}
+</ul>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+        fetch('/favorites?ids=' + JSON.stringify(favorites))
+            .then(response => response.text())
+            .then(html => document.getElementById("favorite-list").innerHTML = html);
+    });
+
+    {{ include('js/helper.html.twig') }}
+</script>

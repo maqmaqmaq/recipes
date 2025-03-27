@@ -1,0 +1,40 @@
+<h1>{{ recipe.title }}</h1>
+<img src="{{ recipe.imageUrl }}" width="300">
+<p>{{ recipe.instructions }}</p>
+<p>
+    <strong>Kategoria:</strong>
+    {{ recipe.category }}
+</p>
+<p>
+    <strong>Tagi:</strong>
+    {{ recipe.tags }}
+</p>
+
+<button onclick="toggleFavorite({{ recipe.id }})">
+    <span id="fav-icon-{{ recipe.id }}">+</span> Ulubionych
+</button>
+
+<h2>Komentarze</h2>
+<form method="post">
+    {{ form_start(form) }}
+    {{ form_widget(form) }}
+    <button type="submit">Dodaj komentarz</button>
+    {{ form_end(form) }}
+</form>
+
+<ul>
+    {% for comment in comments|reverse %}
+        <li>{{ comment.content }} ({{ comment.createdAt|date('Y-m-d H:i') }})</li>
+    {% endfor %}
+</ul>
+
+<a href="{{ path('recipe_list') }}">Powrót</a>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const recipeId = {{ recipe.id }};
+        updateFavoriteButton(recipeId);
+    });
+
+    {{ include('js/helper.html.twig') }}
+</script>

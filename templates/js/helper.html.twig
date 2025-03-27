@@ -1,0 +1,23 @@
+    function toggleFavorite(recipeId) {
+        let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+        if (favorites.includes(recipeId)) {
+            favorites = favorites.filter(id => id !== recipeId);
+        } else {
+            favorites.push(recipeId);
+        }
+
+        localStorage.setItem("favorites", JSON.stringify(favorites));
+        updateFavoriteButton(recipeId);
+    }
+
+    function updateFavoriteButton(recipeId) {
+        let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+        let favIcon = document.getElementById("fav-icon-" + recipeId);
+
+        if (favorites.includes(recipeId)) {
+            favIcon.innerText = "-";
+        } else {
+            favIcon.innerText = "+";
+        }
+    }

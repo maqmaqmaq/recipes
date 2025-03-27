@@ -1,0 +1,19 @@
+<h1>Lista Przepisów</h1>
+
+<form method="get">
+    <input type="text" name="search" value="{{ search }}" placeholder="Szukaj po tytule">
+    <button type="submit">Szukaj</button>
+</form>
+
+<ul>
+    {% for recipe in pagination.items %}
+        <li>
+            <img src="{{ recipe.imageUrl }}" width="100">
+            <a href="{{ path('recipe_detail', {'id': recipe.id}) }}">{{ recipe.title }}</a>
+        </li>
+    {% else %}
+        <li>Brak wyników.</li>
+    {% endfor %}
+</ul>
+
+{{ knp_pagination_render(pagination) }}
