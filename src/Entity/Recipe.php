@@ -9,8 +9,9 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RecipeRepository::class)]
-#[ORM\Table(name: "recipe")]
-#[ORM\UniqueConstraint(name: "unique_recipe_title", columns: ["title"])]
+#[ORM\Table(name: 'recipe')]
+#[ORM\UniqueConstraint(name: 'unique_recipe_title', columns: ['title'])]
+#[ORM\HasLifecycleCallbacks]
 class Recipe
 {
     #[ORM\Id]
@@ -28,7 +29,7 @@ class Recipe
     private ?string $category = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $tags = null;
+    private ?string $tags = null; // Keeping as string for now based on original code
 
     #[ORM\Column(length: 255)]
     private ?string $imageUrl = null;
@@ -39,12 +40,18 @@ class Recipe
     /**
      * @var Collection<int, Comment>
      */
-    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'recipe', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: 'recipe', cascade: ['persist', 'remove'], orphanRemoval: true)] // Added orphanRemoval, cascade persist
     private Collection $comments;
 
     public function __construct()
     {
         $this->comments = new ArrayCollection();
+    }
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -132,7 +139,7 @@ class Recipe
         return $this->comments;
     }
 
-    public function addComments(Comment $comment): static
+    public function addComment(Comment $comment): static
     {
         if (!$this->comments->contains($comment)) {
             $this->comments->add($comment);
@@ -145,7 +152,6 @@ class Recipe
     public function removeComment(Comment $comment): static
     {
         if ($this->comments->removeElement($comment)) {
-            // set the owning side to null (unless already changed)
             if ($comment->getRecipe() === $this) {
                 $comment->setRecipe(null);
             }

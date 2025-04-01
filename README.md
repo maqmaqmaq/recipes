@@ -4,9 +4,9 @@ Aplikacja do synchronizacji i wyświetlania przepisów kulinarnych z TheMealDB.
 
 ## Instalacja
 
-### 1. Sklonowanie repozytorium
-Najpierw wypakuj repozytorium do lokalnego folderu i 
-wejdź do wypakowanego lokalnie katalogu
+### 1. Rozpakowanie repozytorium
+Najpierw wypakuj repozytorium do lokalnego folderu i
+wejdź do wypakowanego lokalnie katalogu (co zapewne już zrobiłeś)
 
 ### 2. Instalacja
 ```sh

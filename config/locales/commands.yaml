@@ -1,0 +1,8 @@
+# config/locales/commands.yaml
+pl:
+  sync:
+    start: 'Rozpoczęto synchronizację przepisów...'
+    success: 'Synchronizacja zakończona sukcesem! Dodano %count% nowych przepisów.'
+    error:
+      api: 'Wystąpił błąd podczas synchronizacji z zewnętrznym API: %message%'
+      unexpected: 'Wystąpił nieoczekiwany błąd podczas synchronizacji: %message%'

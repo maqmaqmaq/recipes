@@ -2,18 +2,23 @@
 
 namespace App\Controller;
 
+use App\Entity\Comment;
 use App\Entity\Recipe;
+use App\Form\CommentType;
+use App\Repository\CommentRepository;
+use App\Repository\RecipeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Comment;
-use App\Form\CommentType;
 
 class RecipeController extends AbstractController
 {
+    private const DEFAULT_PAGE_LIMIT = 10;
+
     #[Route('/', name: 'home')]
     public function home(): Response
     {
@@ -21,52 +26,71 @@ class RecipeController extends AbstractController
     }
 
     #[Route('/recipes', name: 'recipe_list')]
-    public function index(EntityManagerInterface $entityManager, PaginatorInterface $paginator, Request $request): Response
-    {
+    public function index(
+        RecipeRepository $recipeRepository,
+        PaginatorInterface $paginator,
+        Request $request,
+        ParameterBagInterface $params,
+    ): Response {
         $search = $request->query->get('search', '');
+        $limit = $params->get('app.recipes_per_page') ?? self::DEFAULT_PAGE_LIMIT;
 
-        $queryBuilder = $entityManager->getRepository(Recipe::class)
-            ->createSearchQueryBuilder($search);
+        $query = $recipeRepository->findByTitleLikeQuery($search);
 
-
-        $pagination = $paginator->paginate($queryBuilder, $request->query->getInt('page', 1), 10);
+        $pagination = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1),
+            $limit
+        );
 
         return $this->render('recipe/index.html.twig', [
             'pagination' => $pagination,
-            'search' => $search
+            'search' => $search,
+            'limit' => $limit,
         ]);
     }
 
-
-
-    #[Route('/recipes/{id}', name: 'recipe_detail')]
-    public function show(Recipe $recipe, Request $request, EntityManagerInterface $entityManager): Response
-    {
+    #[Route('/recipes/{id}', name: 'recipe_detail', requirements: ['id' => '\d+'])] // Add requirement for ID to be integer
+    public function show(
+        Recipe $recipe,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        CommentRepository $commentRepository,
+        ParameterBagInterface $params,
+    ): Response {
         $comment = new Comment();
         $form = $this->createForm(CommentType::class, $comment);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $comment->setRecipe($recipe);
-            $comment->setCreatedAt(new \DateTimeImmutable());
             $entityManager->persist($comment);
             $entityManager->flush();
+
+            $this->addFlash('success', 'Comment added successfully!');
 
             return $this->redirectToRoute('recipe_detail', ['id' => $recipe->getId()]);
         }
 
+        $commentLimit = $params->get('app.comments_per_page') ?? 20;
+
+        $comments = $commentRepository->findLatestByRecipe($recipe, $commentLimit);
+
         return $this->render('recipe/show.html.twig', [
             'recipe' => $recipe,
-            'comments' => $recipe->getComments()->slice(-20), // Pobierz 20 najnowszych
-            'form' => $form->createView(),
+            'comments' => $comments,
+            'commentForm' => $form->createView(),
         ]);
     }
 
     #[Route('/favorites', name: 'recipe_favorites')]
-    public function favorites(EntityManagerInterface $entityManager, Request $request): Response
+    public function favorites(Request $request, RecipeRepository $recipeRepository): Response // Inject repository
     {
-        $favorites = json_decode($request->query->get('ids', '[]'), true);
-        $recipes = $entityManager->getRepository(Recipe::class)->findBy(['id' => $favorites]);
+        $favoritesIds = json_decode($request->query->get('ids', '[]'), true);
+
+        $favoritesIds = array_filter(array_map('intval', $favoritesIds), fn ($id) => $id > 0);
+
+        $recipes = $recipeRepository->findBy(['id' => $favoritesIds]);
 
         return $this->render('recipe/favorites.html.twig', [
             'recipes' => $recipes,
